@@ -100,3 +100,26 @@ def delete_task(id: int):
         status_code=404,
         detail=f"Task {id} not found"
     )
+
+@app.get("/stats")
+def get_stats():
+    total = len(tasks)
+    done = sum(1 for task in tasks if task["done"])
+    open_tasks = total - done
+
+    return {
+        "total": total,
+        "done": done,
+        "open": open_tasks
+    }
+
+@app.post("/reset")
+def reset_tasks():
+    global task
+
+    task = [task.copy() for task in tasks]
+
+    return {
+        "message": "Tasks reset successfully",
+        "tasks": task
+    }
