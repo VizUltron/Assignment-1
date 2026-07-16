@@ -36,7 +36,6 @@ http://127.0.0.1:8000/docs
 ## Mortality Experiment
 
 After creating several tasks and restarting the FastAPI server, all previously created tasks disappeared, leaving only the original sample tasks.
-
 This behavior occurs because the application uses an **in-memory Python list** as its data store. Since the list exists only while the server process is running, restarting the server recreates the initial list and discards any tasks created during the previous session. No data is persisted to a file or database.
 ---
 
