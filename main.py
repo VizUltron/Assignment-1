@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 import sqlite3
 
-conn = sqlite3.connect("tasks.db")
+conn = sqlite3.connect("tasks.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks (
@@ -15,27 +15,11 @@ cursor.execute("""
 conn.commit()
 
 
+
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     done: Optional[bool] = None
     
-tasks = [
-    {
-        "id": 1,
-        "title": "Learn FastAPI",
-        "done": False
-    },
-    {
-        "id": 2,
-        "title": "Build Assignment",
-        "done": True
-    },
-    {
-        "id": 3,
-        "title": "Submit Project",
-        "done": False
-    }
-]
 app = FastAPI()
 @app.get("/")
 def home():
@@ -51,32 +35,45 @@ def health():
 
 @app.get("/tasks")
 def get_tasks():
-    return tasks
+    cursor.execute("SELECT * FROM tasks")
+    rows = cursor.fetchall()
+    return rows
 
 @app.get("/tasks/{id}")
 def get_task_by_id(id: int):
-    for task in tasks:
-        if task["id"] == id:
-            return task
-    return {"message": "Task not found"}
+    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    rows = cursor.fetchall()
+    if(len(rows) == 0):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {id} not found"
+        )
+    return rows
 
 @app.post("/tasks", status_code=201)
 def create_task(title: str):
-    if title.strip() == "":
-        raise HTTPException(
+
+    if not title or title.strip() == "":
+        return JSONResponse(
             status_code=400,
-            detail="Title cannot be empty"
+            content={"error": "Title is required"}
         )
-    new_task = {
-        "id": len(tasks) + 1,
-        "title": title,
-        "done": False
-    }
 
-    tasks.append(new_task)
-    return new_task
+    cursor.execute(
+        "INSERT INTO tasks (title, done) VALUES (?, ?)",
+        (title, 0)
+    )
+    conn.commit()
 
-from fastapi import HTTPException
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (cursor.lastrowid,)
+    )
+
+    row = cursor.fetchone()
+
+
+
 
 @app.put("/tasks/{id}", status_code=200)
 def update_task(id: int, task_update: TaskUpdate):
