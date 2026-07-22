@@ -74,42 +74,62 @@ def create_task(title: str):
 
 
 
-
 @app.put("/tasks/{id}", status_code=200)
 def update_task(id: int, task_update: TaskUpdate):
-    # Empty body -> 400
-    if task_update.title is None and task_update.done is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Request body cannot be empty"
+
+    # Check if task exists
+    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
         )
 
-    for task in tasks:
-        if task["id"] == id:
-            if task_update.title is not None:
-                task["title"] = task_update.title
+    # Validate title
+    if not task_update.title or task_update.title.strip() == "":
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Title is required"}
+        )
 
-            if task_update.done is not None:
-                task["done"] = task_update.done
-
-            return task
-
-    raise HTTPException(
-        status_code=404,
-        detail=f"Task {id} not found"
+    # Update task
+    cursor.execute(
+        "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+        (task_update.title, int(task_update.done), id)
     )
+    conn.commit()
+
+    # Return updated task
+    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    row = cursor.fetchone()
+
+    return {
+        "id": row[0],
+        "title": row[1],
+        "done": bool(row[2])
+    }
+
 
 @app.delete("/tasks/{id}", status_code=204)
 def delete_task(id: int):
-    for task in tasks:
-        if task["id"] == id:
-            tasks.remove(task)
-            return
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Task {id} not found"
-    )
+    # Check if task exists
+    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+
+    # Delete task
+    cursor.execute("DELETE FROM tasks WHERE id = ?", (id,))
+    conn.commit()
+
+    return
 
 @app.get("/stats")
 def get_stats():
