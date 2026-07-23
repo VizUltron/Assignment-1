@@ -39,16 +39,36 @@ def get_tasks():
     rows = cursor.fetchall()
     return rows
 
-@app.get("/tasks/{id}")
-def get_task_by_id(id: int):
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+@app.get("/tasks")
+def get_tasks(search: str = None, done: bool = None):
+
+    query = "SELECT * FROM tasks"
+    params = []
+
+    if search:
+        query += " WHERE title LIKE ?"
+        params.append(f"%{search}%")
+
+    if done is not None:
+        if search:
+            query += " AND done = ?"
+        else:
+            query += " WHERE done = ?"
+        params.append(int(done))
+
+    query += " ORDER BY title"
+
+    cursor.execute(query, tuple(params))
     rows = cursor.fetchall()
-    if(len(rows) == 0):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Task {id} not found"
-        )
-    return rows
+
+    return [
+        {
+            "id": row[0],
+            "title": row[1],
+            "done": bool(row[2])
+        }
+        for row in rows
+    ]
 
 @app.post("/tasks", status_code=201)
 def create_task(title: str):
