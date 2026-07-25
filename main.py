@@ -2,32 +2,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
-import psycopg
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
-db_url = os.getenv("DATABASE_URL")
-conn = psycopg.connect(db_url)
-cursor = conn.cursor()
-cursor.execute("""
-   CREATE TABLE IF NOT EXISTS tasks (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    done BOOLEAN
-);
-    
-""")
-conn.commit()
+from db import conn, cursor
 
 
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
     done: Optional[bool] = None
-    
+
 app = FastAPI()
 @app.get("/")
 def home():
@@ -54,29 +36,44 @@ def get_tasks(search: str = None, done: bool = None):
     params = []
 
     if search:
-        query += " WHERE title LIKE ?"
+        query += " WHERE title ILIKE %s"
         params.append(f"%{search}%")
 
     if done is not None:
         if search:
-            query += " AND done = ?"
+            query += " AND done = %s"
         else:
-            query += " WHERE done = ?"
-        params.append(int(done))
+            query += " WHERE done = %s"
+        params.append(done)
 
     query += " ORDER BY title"
 
-    cursor.execute(query, tuple(params))
+    cursor.execute(query, params)
     rows = cursor.fetchall()
 
     return [
         {
             "id": row[0],
             "title": row[1],
-            "done": bool(row[2])
+            "done": row[2]
         }
         for row in rows
     ]
+
+@app.get("/tasks/{id}")
+def get_task(id: int):
+    cursor.execute("SELECT * FROM tasks WHERE id = %s", (id,))
+    row = cursor.fetchone()
+    if row is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+    return {
+        "id": row[0],
+        "title": row[1],
+        "done": row[2]
+    }
 
 @app.post("/tasks", status_code=201)
 def create_task(title: str):
@@ -106,7 +103,7 @@ def create_task(title: str):
 def update_task(id: int, task_update: TaskUpdate):
 
     # Check if task exists
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM tasks WHERE id = %s", (id,))
     row = cursor.fetchone()
 
     if row is None:
