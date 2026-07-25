@@ -85,17 +85,22 @@ def create_task(title: str):
         )
 
     cursor.execute(
-        "INSERT INTO tasks (title, done) VALUES (?, ?)",
-        (title, 0)
+        "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING * ",
+        (title, False)
     )
     conn.commit()
 
     cursor.execute(
-        "SELECT * FROM tasks WHERE id = ?",
-        (cursor.lastrowid,)
+        """
+        INSERT INTO tasks (title, done)
+        VALUES (%s, %s)
+        RETURNING *
+        """,
+        (task.title, False)
     )
 
-    row = cursor.fetchone()
+row = cursor.fetchone()
+conn.commit()
 
 
 
@@ -121,19 +126,19 @@ def update_task(id: int, task_update: TaskUpdate):
 
     # Update task
     cursor.execute(
-        "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
-        (task_update.title, int(task_update.done), id)
+        "UPDATE tasks SET title = %s, done = %s WHERE id = %s",
+        (task_update.title, task_update.done, id)
     )
     conn.commit()
 
     # Return updated task
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM tasks WHERE id = %s", (id,))
     row = cursor.fetchone()
 
     return {
         "id": row[0],
         "title": row[1],
-        "done": bool(row[2])
+        "done": row[2]
     }
 
 
@@ -141,7 +146,7 @@ def update_task(id: int, task_update: TaskUpdate):
 def delete_task(id: int):
 
     # Check if task exists
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM tasks WHERE id = %s", (id,))
     row = cursor.fetchone()
 
     if row is None:
@@ -151,7 +156,7 @@ def delete_task(id: int):
         )
 
     # Delete task
-    cursor.execute("DELETE FROM tasks WHERE id = ?", (id,))
+    cursor.execute("DELETE FROM tasks WHERE id = %s", (id,))
     conn.commit()
 
     return
