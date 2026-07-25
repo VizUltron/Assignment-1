@@ -2,13 +2,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
+import psycopg
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 db_url = os.getenv("DATABASE_URL")
-conn = psycopg.connect(db_url, check_same_thread=False)
+conn = psycopg.connect(db_url)
 cursor = conn.cursor()
 cursor.execute("""
    CREATE TABLE IF NOT EXISTS tasks (
