@@ -370,7 +370,7 @@ SELECT * FROM tasks;
 
 ### Docker Compose
 
-![Docker Compose](docker.png)
+![Docker Compose](compose.png)
 
 ```bash
 docker compose up
