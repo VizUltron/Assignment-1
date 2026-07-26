@@ -4,7 +4,10 @@ from pydantic import BaseModel
 from typing import Optional
 import sqlite3
 from db import conn, cursor
+import redis
 
+r = redis.Redis(host="redis", port=6379)
+print(r.ping())
 
 
 class TaskUpdate(BaseModel):
@@ -22,7 +25,20 @@ def home():
     
 @app.get("/health")
 def health():
-    return {"message": "OK"}
+    try:
+        cursor.execute("SELECT 1")
+        return {
+            "status": "ok",
+            "db": "ok"
+        }
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "db": "down"
+            }
+        )
 
 @app.get("/tasks")
 def get_tasks():

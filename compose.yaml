@@ -26,3 +26,6 @@ services:
 
 volumes:
   taskdata:
+
+redis:
+  image: redis:6.2

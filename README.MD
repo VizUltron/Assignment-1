@@ -377,3 +377,5 @@ docker compose up
 ```
 
 showing both the API and PostgreSQL containers running successfully.
+
+#### Without a Docker volume, PostgreSQL stores its data inside the container's writable layer. Removing the container deletes that layer, so all database data is lost. Docker volumes exist to persist data independently of the container lifecycle.
