@@ -379,3 +379,17 @@ docker compose up
 showing both the API and PostgreSQL containers running successfully.
 
 #### Without a Docker volume, PostgreSQL stores its data inside the container's writable layer. Removing the container deletes that layer, so all database data is lost. Docker volumes exist to persist data independently of the container lifecycle.
+
+---
+
+## AI vs Me (Assignment 3)
+
+The table below highlights the differences in how the AI (in `ai_work/ai.py`) and I (in `main.py`) approached the migration to PostgreSQL and Docker in Assignment 3.
+
+| Feature | My Implementation (`main.py`) | AI Reference (`ai_work/ai.py`) |
+|---------|-------------------------------|--------------------------------|
+| **Search & Filtering** | Fully implemented SQL-based filtering (`search`, `done`) in the `GET /tasks` endpoint using `ILIKE` and dynamic query building. | Only implements basic data retrieval (`SELECT *`). No query parameters or filtering added. |
+| **Request Validation** | Uses raw query parameters (e.g., `title: str`) for `POST` requests, but uses Pydantic for `PUT`. | Consistently uses strict Pydantic data models (`TaskCreate`, `TaskUpdate`) for both `POST` and `PUT` body parsing. |
+| **Additional Endpoints** | Retains the extra `/stats` and `/reset` utility endpoints. | Strictly sticks to the core CRUD operations and a `/health` check. |
+| **Data Handling** | Explicit row indexing (`row[0]`, `row[1]`) with some legacy Python operations remaining. | Cleanly maps PostgreSQL rows to dictionaries explicitly upon fetch. |
+| **Error Handling** | Uses `JSONResponse` across the board, explicitly matching Assignment 1's custom error formats. | Retained the exact same custom `JSONResponse` error formats for consistency with the previous AI version. |
