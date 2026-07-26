@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
@@ -85,22 +86,17 @@ def create_task(title: str):
         )
 
     cursor.execute(
-        "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING * ",
+        "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING *",
         (title, False)
     )
+    row = cursor.fetchone()
     conn.commit()
-
-    cursor.execute(
-        """
-        INSERT INTO tasks (title, done)
-        VALUES (%s, %s)
-        RETURNING *
-        """,
-        (task.title, False)
-    )
-
-row = cursor.fetchone()
-conn.commit()
+    
+    return {
+        "id": row[0],
+        "title": row[1],
+        "done": row[2]
+    }
 
 
 

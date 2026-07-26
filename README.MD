@@ -238,3 +238,142 @@ The AI-generated implementation and my implementation both provide a CRUD API, b
 - How parameterized queries help prevent SQL injection.
 - The difference between volatile in-memory storage and persistent database storage.
 - How a REST API can keep the same interface while changing only its storage implementation.
+
+# Assignment 3 – PostgreSQL & Dockerized Deployment
+
+## Overview
+
+This assignment extends the Task Management API by replacing SQLite with **PostgreSQL** for persistent storage and containerizing the application using **Docker** and **Docker Compose**. The API now runs as a complete multi-container application with a FastAPI service and a PostgreSQL database.
+
+---
+
+## What's New
+
+- Migrated the database from **SQLite** to **PostgreSQL** using `psycopg`.
+- Configured database connectivity using environment variables stored in a `.env` file.
+- Automatically creates the `tasks` table during application startup.
+- Seeds example tasks only when the database is empty.
+- Replaced SQLite queries with PostgreSQL parameterized queries.
+- Containerized the FastAPI application using **Docker**.
+- Orchestrated the API and PostgreSQL services with **Docker Compose**.
+- Added persistent Docker volumes to retain database data across container restarts.
+- Enabled one-command application startup using Docker Compose.
+
+---
+
+## Technologies Used
+
+- FastAPI
+- PostgreSQL 16
+- Psycopg
+- Docker
+- Docker Compose
+- Python Dotenv
+
+---
+
+## Running the Project
+
+### 1. Copy the environment file
+
+```bash
+cp .env.example .env
+```
+
+### 2. Start the application
+
+```bash
+docker compose up
+```
+
+The API will be available at:
+
+```
+http://localhost:8000
+```
+
+Swagger Documentation:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string used by the application |
+
+Example:
+
+```text
+DATABASE_URL=postgres://postgres:dev@db:5432/tasks
+```
+
+---
+
+## Docker Architecture
+
+```
+Client
+   │
+   ▼
+FastAPI Container
+   │
+   ▼
+PostgreSQL Container
+   │
+   ▼
+Docker Volume (Persistent Storage)
+```
+
+---
+
+## Improvements over Assignment 2
+
+| Assignment 2 | Assignment 3 |
+|--------------|--------------|
+| SQLite | PostgreSQL |
+| Local execution | Dockerized deployment |
+| Manual database setup | Docker Compose orchestration |
+| Local database file | Persistent Docker volume |
+| SQLite driver | Psycopg |
+| Local configuration | Environment-based configuration |
+
+---
+
+## Learning Outcomes
+
+- Connected FastAPI to PostgreSQL using `psycopg`.
+- Used environment variables to securely manage database configuration.
+- Implemented automatic database initialization and conditional data seeding.
+- Executed parameterized SQL queries to improve security.
+- Built and deployed the application using Docker.
+- Managed multiple services using Docker Compose.
+- Configured persistent storage using Docker volumes.
+- Created a portable, one-command deployment workflow.
+
+---
+
+## Screenshots
+
+### PostgreSQL Database
+
+![PostgreSQL Database](db.png)
+
+```sql
+\dt
+SELECT * FROM tasks;
+```
+
+### Docker Compose
+
+![Docker Compose](docker.png)
+
+```bash
+docker compose up
+```
+
+showing both the API and PostgreSQL containers running successfully.
